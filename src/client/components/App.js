@@ -8,9 +8,37 @@ const App = (props) => {
   let [grid, setGrid] = useState(Array.from({ length: 3 }, (_, i) => Array.from({ length: 3 }, (_, k) => '')))
   let [xIsUp, setXIsUp] = useState(true);
   let [history, setHistory] = useState([Array.from({ length: 3 }, (_, i) => Array.from({ length: 3 }, (_, k) => ''))])
-  
+  let [gameOver, setGameOver] = useState(false);
+  let [whoWon, setWhoWon] = useState('');
+
+
+  const calculateGameOver = (grid, rowIndex, colIndex) => {
+    // horizontal
+    const targetSymbol = grid[rowIndex][colIndex];
+    if (grid[rowIndex].every(character => character === targetSymbol)) {
+      return targetSymbol;
+    }
+    // vertical
+    if (grid.every(row => row[colIndex] === targetSymbol)) {
+      return targetSymbol;
+    }
+    // diagonals
+    // left diagonal [[0,0], [1,1], [2,2]]
+    // right diagonal [[0,2], [1,1], [2,0]]
+    let leftWin = true;
+    let rightWin = true;
+    for (let i = 0, len = 3; i < len; i++) {
+      if (targetSymbol !== grid[i][i]) {
+        leftWin = false;
+      }
+      if (targetSymbol !== grid[i][len - 1 - i]) {
+        rightWin = false;
+      }
+    }
+    return leftWin || rightWin ? targetSymbol : '';
+  };
+
   const clickHandler = ([rowIndex, colIndex] = coordinate) => {
-    console.log([rowIndex, colIndex]);
     let gridSlice = [grid[0].slice(), grid[1].slice(), grid[2].slice()];
     if (!gridSlice[rowIndex][colIndex]) {
       gridSlice[rowIndex][colIndex] = xIsUp ? X_VALUE : O_VALUE;
@@ -19,7 +47,11 @@ const App = (props) => {
       setGrid(gridSlice);
       setXIsUp(!xIsUp);
       setHistory(hist);
-      console.log(hist);
+      const winner = calculateGameOver(gridSlice, rowIndex, colIndex);
+      if (winner) {
+        setWhoWon(winner);
+        setGameOver(true);
+      }
     }
   };
   const clickHistory = (e) => {
@@ -36,6 +68,8 @@ const App = (props) => {
     setXIsUp(true);
     setGrid(Array.from({ length: 3 }, (_, i) => Array.from({ length: 3 }, (_, k) => '')));
     setHistory([Array.from({ length: 3 }, (_, i) => Array.from({ length: 3 }, (_, k) => ''))]);
+    setWhoWon('');
+    setGameOver(false);
   };
 
   return (
@@ -50,6 +84,14 @@ const App = (props) => {
         </div>
         <Board onClick={clickHandler} grid={grid} />
       </div>
+      {
+        gameOver ? (
+          <div className="modal">
+            <h2 className="page-title"><span className="page-title blue-text">{whoWon}</span> won!</h2>
+            <button className="btn" onClick={(e) => clickNew(e)}>New game</button>
+          </div>
+        ) : (<React.Fragment></React.Fragment>)
+      }
     </div>
   )
 }
